@@ -1,0 +1,3 @@
+date,productId,currency,price
+invalidDate,1,EUR,10
+20160102,2,USD,20.1
