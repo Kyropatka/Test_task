@@ -1,6 +1,8 @@
-package com.gmail.deniska1406sme.test_task;
+package com.gmail.deniska1406sme.test_task.Parsers;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.gmail.deniska1406sme.test_task.Model.Trade;
+import com.gmail.deniska1406sme.test_task.Model.TradeWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,5 +1,7 @@
-package com.gmail.deniska1406sme.test_task;
+package com.gmail.deniska1406sme.test_task.Services;
 
+import com.gmail.deniska1406sme.test_task.Model.Trade;
+import com.gmail.deniska1406sme.test_task.Parsers.TradeParser;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.slf4j.Logger;

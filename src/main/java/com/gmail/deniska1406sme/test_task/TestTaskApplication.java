@@ -1,5 +1,6 @@
 package com.gmail.deniska1406sme.test_task;
 
+import com.gmail.deniska1406sme.test_task.Services.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -8,7 +9,6 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
 import java.io.File;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 @SpringBootApplication

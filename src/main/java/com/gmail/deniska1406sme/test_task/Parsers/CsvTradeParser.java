@@ -1,5 +1,6 @@
-package com.gmail.deniska1406sme.test_task;
+package com.gmail.deniska1406sme.test_task.Parsers;
 
+import com.gmail.deniska1406sme.test_task.Model.Trade;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.slf4j.Logger;
@@ -11,7 +12,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;

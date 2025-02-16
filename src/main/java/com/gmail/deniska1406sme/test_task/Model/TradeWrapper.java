@@ -1,4 +1,4 @@
-package com.gmail.deniska1406sme.test_task;
+package com.gmail.deniska1406sme.test_task.Model;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;

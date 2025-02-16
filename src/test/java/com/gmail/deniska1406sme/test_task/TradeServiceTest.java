@@ -1,5 +1,9 @@
 package com.gmail.deniska1406sme.test_task;
 
+import com.gmail.deniska1406sme.test_task.Parsers.CsvTradeParser;
+import com.gmail.deniska1406sme.test_task.Parsers.JsonTradeParser;
+import com.gmail.deniska1406sme.test_task.Parsers.XmlTradeParser;
+import com.gmail.deniska1406sme.test_task.Services.TradeService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.redis.core.StringRedisTemplate;

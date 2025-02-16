@@ -1,4 +1,6 @@
-package com.gmail.deniska1406sme.test_task;
+package com.gmail.deniska1406sme.test_task.Parsers;
+
+import com.gmail.deniska1406sme.test_task.Model.Trade;
 
 import java.io.IOException;
 import java.io.InputStream;

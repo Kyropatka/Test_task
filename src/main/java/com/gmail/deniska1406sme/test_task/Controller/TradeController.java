@@ -1,5 +1,8 @@
-package com.gmail.deniska1406sme.test_task;
+package com.gmail.deniska1406sme.test_task.Controller;
 
+import com.gmail.deniska1406sme.test_task.Parsers.TradeParser;
+import com.gmail.deniska1406sme.test_task.Parsers.TradeParserFactory;
+import com.gmail.deniska1406sme.test_task.Services.TradeService;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
