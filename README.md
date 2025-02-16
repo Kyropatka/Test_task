@@ -57,4 +57,20 @@ Stream API
 ![image](https://github.com/user-attachments/assets/940345cb-f4b3-4099-a1c2-e046023dc429)
 ![image](https://github.com/user-attachments/assets/708190cb-ae7e-49d1-8a04-5c9a4a0d41c5)
 
+Test data set Trade.csv
+
+![image](https://github.com/user-attachments/assets/f54c337a-2acc-40bf-8b83-97d893da9dc1)
+
+Endpoint response.
+
+![image](https://github.com/user-attachments/assets/83e3f0c3-85d8-4c80-8bf6-b16710faec81)
+
+Endpoint response for test_trade.json
+
+![image](https://github.com/user-attachments/assets/e2a8d736-e946-40a3-97ee-c3180743e7f9)
+
+Endpoint response for test_trade.xml
+
+![image](https://github.com/user-attachments/assets/9e3b44bc-855c-400d-8071-4bd0bf5cbced)
+
 
