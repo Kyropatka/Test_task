@@ -28,9 +28,13 @@ public class TradeController {
     }
 
     @PostMapping("/enrich")
-    public CompletableFuture<ResponseEntity<Resource>> enrichTrades(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("format") String format) throws IOException {
+    public CompletableFuture<ResponseEntity<Resource>> enrichTrades(@RequestParam("file") MultipartFile file) throws IOException {
+
+        String originalFileName = file.getOriginalFilename();
+        String format = "";
+        if (originalFileName != null && originalFileName.contains(".")) {
+            format = originalFileName.substring(originalFileName.lastIndexOf(".") + 1);
+        }
 
         File inputFile = File.createTempFile("temp_trade", "." + format);
         file.transferTo(inputFile);

@@ -9,8 +9,8 @@ import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class XmlTradeParser implements TradeParser {
 
@@ -21,16 +21,16 @@ public class XmlTradeParser implements TradeParser {
     @Override
     public List<Trade> parseTrades(InputStream inputStream) throws IOException {
         TradeWrapper wrapper = xmlMapper.readValue(inputStream, TradeWrapper.class);
-        List<Trade> validTrades = new ArrayList<>();
-
-        for(Trade trade : wrapper.getTrades()) {
-            try {
-                LocalDate.parse(trade.getDate(), formatter);
-                validTrades.add(trade);
-            }catch (DateTimeParseException e){
-                logger.error("Invalid date format: {}", trade.getDate());
-            }
-        }
-        return validTrades;
+        return wrapper.getTrades().stream()
+                .filter(trade -> {
+                    try {
+                        LocalDate.parse(trade.getDate(), formatter);
+                        return true;
+                    } catch (DateTimeParseException e) {
+                        logger.error("Invalid date format: {}", trade.getDate());
+                        return false;
+                    }
+                })
+                .collect(Collectors.toList());
     }
 }

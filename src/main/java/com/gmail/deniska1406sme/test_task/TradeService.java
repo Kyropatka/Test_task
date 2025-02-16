@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,19 +37,29 @@ public class TradeService {
 
                 List<Trade> rawTrades = parser.parseTrades(inputStream);
 
-                for (Trade trade : rawTrades) {
-                    String date = trade.getDate();
-                    Long productId = Long.parseLong(trade.getProductName());
-                    String productName = localCache.computeIfAbsent(productId, id -> {
-                       String name = stringRedisTemplate.opsForValue().get(String.valueOf(id));
-                       if (name == null || name.isEmpty()) {
-                           logger.warn("Missing match for productId: {}", id);
-                           return "Missing Product Name";
-                       }
-                       return name;
-                    });
-                    csvPrinter.printRecord(date, productName, trade.getCurrency(), trade.getPrice());
-                }
+                List<List<Object>> records = rawTrades.parallelStream()
+                        .map(trade -> {
+                            String date = trade.getDate();
+                            Long productId = Long.parseLong(trade.getProductName());
+                            String productName = localCache.computeIfAbsent(productId, id -> {
+                                String name = stringRedisTemplate.opsForValue().get(String.valueOf(id));
+                                if (name == null || name.isEmpty()) {
+                                    logger.warn("Missing match for productId: {}", id);
+                                    return "Missing Product Name";
+                                }
+                                return name;
+                            });
+                            return Arrays.<Object>asList(date, productName, trade.getCurrency(), trade.getPrice());
+                        })
+                        .toList();
+
+                records.forEach(record -> {
+                    try {
+                        csvPrinter.printRecord(record);
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                });
                 csvPrinter.flush();
             } catch (IOException e) {
                 logger.error("Error processing trade file", e);

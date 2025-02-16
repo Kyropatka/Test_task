@@ -11,7 +11,10 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class JsonTradeParser implements TradeParser {
 
@@ -24,22 +27,29 @@ public class JsonTradeParser implements TradeParser {
         List<Trade> rawTrades = new ArrayList<>();
         JsonNode root = mapper.readTree(inputStream);
         if (root.isArray()) {
-            for (JsonNode tradeNode : root) {
-                String date = tradeNode.get("date").asText().trim();
+            return StreamSupport.stream(root.spliterator(), false)
+                    .filter(tradeNode -> {
+                        String date = tradeNode.get("date").asText().trim();
+                        try {
+                            LocalDate.parse(date, formatter);
+                            return true;
+                        } catch (DateTimeParseException e) {
+                            logger.error("Invalid date format: {}", date);
+                            return false;
+                        }
+                    })
+                    .map(tradeNode -> {
+                        String date = tradeNode.get("date").asText().trim();
+                        String productId = tradeNode.get("productId").asText().trim();
+                        String currency = tradeNode.get("currency").asText().trim();
+                        Double price = tradeNode.get("price").asDouble();
+                        return new Trade(date, productId, currency, price);
+                    })
+                    .collect(Collectors.toList());
 
-                try{
-                    LocalDate.parse(date, formatter);
-                }catch (DateTimeParseException e){
-                    logger.error("Invalid date format: {}", date);
-                    continue;
-                }
-
-                String productId = tradeNode.get("productId").asText().trim();
-                String currency = tradeNode.get("currency").asText().trim();
-                Double price = tradeNode.get("price").asDouble();
-                rawTrades.add(new Trade(date, productId, currency, price));
-            }
+        } else {
+            logger.error("Expected JSON array of trades");
+            return Collections.emptyList();
         }
-        return rawTrades;
     }
 }
