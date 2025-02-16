@@ -14,46 +14,31 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class TradeService {
 
     private static final Logger logger = LoggerFactory.getLogger(TradeService.class);
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
-    private final StringRedisTemplate stringRedisTemplate;
+    private final TradeParser tradeParser;
+    private final TradeEnricher tradeEnricher;
 
-    public TradeService(StringRedisTemplate stringRedisTemplate) {
-        this.stringRedisTemplate = stringRedisTemplate;
+    public TradeService(TradeParser tradeParser, TradeEnricher tradeEnricher) {
+        this.tradeParser = tradeParser;
+        this.tradeEnricher = tradeEnricher;
     }
 
     public File enrichTradeAndGenerateCsv(File tradeFile, File enrichFile) throws IOException {
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(tradeFile, StandardCharsets.UTF_8));
-             CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
-             BufferedWriter writer = new BufferedWriter(new FileWriter(enrichFile, StandardCharsets.UTF_8));
-             CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader("date", "productName", "currency", "price"))) {
+        List<Trade> rawTrade = tradeParser.parseTrades(tradeFile);
+        List<Trade> enrichedTrade = tradeEnricher.enrichTrades(rawTrade);
 
-            for (CSVRecord record : parser) {
-                String date = record.get("date").trim();
-                try {
-                    LocalDate.parse(date, DATE_FORMATTER); //throw exception if date invalid
-                }catch (DateTimeParseException e) {
-                    logger.error("Invalid date format: {}.", record.get("date"));
-                    continue;//not include trade
-                }
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(enrichFile, StandardCharsets.UTF_8));
+        CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader("date", "productName", "currency", "price"))) {
 
-                Long productId = Long.parseLong(record.get("productId").trim());
-                String productName = stringRedisTemplate.opsForValue().get(String.valueOf(productId));
-
-                if (productName == null || productName.isEmpty()) {
-                    productName = "Missing Product Name";
-                    logger.warn("Missing match");
-                }
-
-                String currency = record.get("currency").trim();
-                Double price = Double.parseDouble(record.get("price").trim());
-
-                csvPrinter.printRecord(date, productName, currency, price);
+            for (Trade trade : enrichedTrade) {
+                csvPrinter.printRecord(trade.getDate(), trade.getProductName(), trade.getCurrency(), trade.getPrice());
             }
             csvPrinter.flush();
         }

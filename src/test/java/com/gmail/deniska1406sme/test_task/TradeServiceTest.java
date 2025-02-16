@@ -24,9 +24,12 @@ public class TradeServiceTest {
     public void setUp() {
         stringRedisTemplate = mock(StringRedisTemplate.class);
         valueOperations = mock(ValueOperations.class);
-
-        tradeService = new TradeService(stringRedisTemplate);
         when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
+
+        TradeParser tradeParser = new TradeParser();
+        TradeEnricher tradeEnricher = new TradeEnricher(stringRedisTemplate);
+
+        tradeService = new TradeService(tradeParser, tradeEnricher);
     }
 
     @Test
