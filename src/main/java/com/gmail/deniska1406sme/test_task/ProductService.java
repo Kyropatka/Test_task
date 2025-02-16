@@ -14,50 +14,61 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Service
 public class ProductService {
 
     private static final Logger logger = LoggerFactory.getLogger(ProductService.class);
     private final StringRedisTemplate stringRedisTemplate;
+    private final ExecutorService executor = Executors.newFixedThreadPool(4);
 
     public ProductService(StringRedisTemplate stringRedisTemplate) {
         this.stringRedisTemplate = stringRedisTemplate;
     }
 
-    public Map<Long, String> getProductNames(File file) throws IOException {
+    public CompletableFuture<Map<Long, String>> getProductNamesAsync(File file) throws IOException {
 
-        Map<Long, String> productNames = new ConcurrentHashMap<>();
+        return CompletableFuture.supplyAsync(() -> {
+            Map<Long, String> productNames = new ConcurrentHashMap<>();
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8));
-             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8));
+                 CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
 
-            for (CSVRecord record : csvParser) {
-                try {
-                    Long productId = Long.parseLong(record.get("productId").trim());
-                    String productName = record.get("productName").trim();
-                    productNames.put(productId, productName);
-                } catch (NumberFormatException e) {
-                    logger.warn("Incorrect productId in file CSV: {}", record.get("productId").trim());
+                for (CSVRecord record : csvParser) {
+                    try {
+                        Long productId = Long.parseLong(record.get("productId").trim());
+                        String productName = record.get("productName").trim();
+                        productNames.put(productId, productName);
+                    } catch (NumberFormatException e) {
+                        logger.warn("Incorrect productId in file CSV: {}", record.get("productId").trim());
+                    }
                 }
+            } catch (IOException e) {
+                logger.error("Error reading file product.csv", e);
             }
-        } catch (IOException e) {
-            logger.error("Error reading file product.csv", e);
-        }
-
-        return productNames;
+            return productNames;
+        }, executor);
     }
 
-    public void saveProductNamesInRedis(Map<Long, String> productNames) {
-
-        try {
-            for (Map.Entry<Long, String> entry : productNames.entrySet()) {
-                stringRedisTemplate.opsForValue().set(String.valueOf(entry.getKey()), entry.getValue());
+    public CompletableFuture<Void> saveProductNamesInRedisAsync(Map<Long, String> productNames) {
+        return CompletableFuture.runAsync(() -> {
+            try {
+                for (Map.Entry<Long, String> entry : productNames.entrySet()) {
+                    stringRedisTemplate.opsForValue().set(String.valueOf(entry.getKey()), entry.getValue());
+                }
+                logger.info("Saved product names into Redis. Number of product names: {}", productNames.size());
+            } catch (Exception e) {
+                logger.error("Error saving product names into Redis", e);
             }
-            logger.info("Saved product names into Redis. Number of product names: {}", productNames.size());
-        } catch (Exception e) {
-            logger.error("Error saving product names into Redis", e);
-        }
+        }, executor);
+    }
+
+    public CompletableFuture<Void> loadAndSaveProductsAsync(File file) throws IOException {
+        return getProductNamesAsync(file)
+                .thenCompose(this::saveProductNamesInRedisAsync);
     }
 }

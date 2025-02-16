@@ -2,6 +2,7 @@ package com.gmail.deniska1406sme.test_task;
 
 
 import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,14 +12,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -27,7 +27,6 @@ import static org.mockito.Mockito.*;
 public class ProductServiceTest {
 
     private ProductService productService;
-    private final Logger logger = LoggerFactory.getLogger(ProductServiceTest.class);
     private ValueOperations<String, String> valueOperations;
 
     @TempDir
@@ -43,7 +42,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    public void testGetProductNames_ValidCSV() throws IOException {
+    public void testGetProductNamesAsync_ValidCSV() throws IOException, ExecutionException, InterruptedException {
         File csvFile = tempDir.resolve("products.csv").toFile();
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(csvFile, StandardCharsets.UTF_8));
@@ -54,7 +53,8 @@ public class ProductServiceTest {
             csvPrinter.flush();
         }
 
-        Map<Long, String> productNames = productService.getProductNames(csvFile);
+        CompletableFuture<Map<Long,String>> future = productService.getProductNamesAsync(csvFile);
+        Map<Long, String> productNames = future.get();
 
         assertEquals(2, productNames.size());
         assertEquals("BigSuper Company", productNames.get(1L));
@@ -62,7 +62,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    void testGetProductNames_InvalidProductId() throws IOException {
+    void testGetProductNamesAsync_InvalidProductId() throws IOException, ExecutionException, InterruptedException {
         File csvFile = tempDir.resolve("invalid_products.csv").toFile();
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(csvFile, StandardCharsets.UTF_8));
         CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader("productId", "productName"))) {
@@ -70,25 +70,29 @@ public class ProductServiceTest {
             csvPrinter.printRecord("abc", "InvalidItem");
         }
 
-        Logger mockLogger = mock(Logger.class);
-        Map<Long, String> productNames = productService.getProductNames(csvFile);
+        CompletableFuture<Map<Long, String>> future = productService.getProductNamesAsync(csvFile);
+        Map<Long, String> productNames = future.get();
+
         assertTrue(productNames.isEmpty(), "Incorrect productId should be ignored");
     }
 
     @Test
-    void testGetProductNames_EmptyFile() throws IOException {
+    void testGetProductNamesAsync_EmptyFile() throws IOException, ExecutionException, InterruptedException {
         File emptyFile = tempDir.resolve("empty.csv").toFile();
         emptyFile.createNewFile();
 
-        Map<Long, String> productNames = productService.getProductNames(emptyFile);
+        CompletableFuture<Map<Long, String>> future = productService.getProductNamesAsync(emptyFile);
+        Map<Long, String> productNames = future.get();
+
         assertTrue(productNames.isEmpty(), "Empty file, should return an empty map");
     }
 
     @Test
-    void testSaveProductNamesInRedis() {
+    void testSaveProductNamesInRedisAsync() throws ExecutionException, InterruptedException {
         Map<Long, String> productNames = Map.of(1L, "BigSuper Company", 2L, "RichNew Company");
 
-        productService.saveProductNamesInRedis(productNames);
+        CompletableFuture<Void> future = productService.saveProductNamesInRedisAsync(productNames);
+        future.get();
 
         verify(valueOperations, times(1)).set("1", "BigSuper Company");
         verify(valueOperations, times(1)).set("2", "RichNew Company");
@@ -96,9 +100,30 @@ public class ProductServiceTest {
     }
 
     @Test
-    void testSaveProductNamesInRedis_EmptyMap() {
-        productService.saveProductNamesInRedis(Map.of());
+    void testSaveProductNamesInRedisAsync_EmptyMap() throws ExecutionException, InterruptedException {
+        CompletableFuture<Void> future = productService.saveProductNamesInRedisAsync(Map.of());
+        future.get();
 
         verifyNoInteractions(valueOperations);
+    }
+
+    @Test
+    void testLoadProductNamesInRedisAsync() throws IOException, ExecutionException, InterruptedException {
+        File csvFile = tempDir.resolve("products.csv").toFile();
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(csvFile, StandardCharsets.UTF_8));
+        CSVPrinter printer = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader("productId", "productName"))) {
+
+            printer.printRecord("1", "BigSuper Company");
+            printer.printRecord("2", "RichNew Company");
+            printer.flush();
+        }
+
+        CompletableFuture<Void> future = productService.loadAndSaveProductsAsync(csvFile);
+        future.get();
+
+        verify(valueOperations, times(1)).set("1", "BigSuper Company");
+        verify(valueOperations, times(1)).set("2", "RichNew Company");
+        verifyNoMoreInteractions(valueOperations);
     }
 }

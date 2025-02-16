@@ -1,0 +1,14 @@
+<TradeWrapper>
+    <trade>
+        <productName>1</productName>
+        <date>20240216</date>
+        <currency>EUR</currency>
+        <price>10</price>
+    </trade>
+    <trade>
+        <productName>2</productName>
+        <date>20240216</date>
+        <currency>USD</currency>
+        <price>20.1</price>
+    </trade>
+</TradeWrapper>

@@ -9,6 +9,7 @@ import org.springframework.core.io.Resource;
 
 import java.io.File;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 @SpringBootApplication
 public class TestTaskApplication implements CommandLineRunner {
@@ -25,10 +26,7 @@ public class TestTaskApplication implements CommandLineRunner {
         Resource resource = new ClassPathResource("largeSizeProduct.csv");
         File productFile  = resource.getFile();
 
-        Map<Long, String> productNames = productService.getProductNames(productFile);
-        productService.saveProductNamesInRedis(productNames);
-
-        System.out.println("Product names loaded and saved in Redis.");
-
+        CompletableFuture<Void> future = productService.loadAndSaveProductsAsync(productFile);
+        future.thenRun(() -> System.out.println("Product names loaded and saved in Redis."));
     }
 }

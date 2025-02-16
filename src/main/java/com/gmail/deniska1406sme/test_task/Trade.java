@@ -13,6 +13,9 @@ public class Trade {
         this.price = price;
     }
 
+    public Trade() {
+    }
+
     public String getDate() {
         return date;
     }
