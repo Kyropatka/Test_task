@@ -3,6 +3,7 @@ package com.gmail.deniska1406sme.test_task.Controller;
 import com.gmail.deniska1406sme.test_task.Parsers.TradeParser;
 import com.gmail.deniska1406sme.test_task.Parsers.TradeParserFactory;
 import com.gmail.deniska1406sme.test_task.Services.TradeService;
+import com.gmail.deniska1406sme.test_task.Services.TradeServiceReactive;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Mono;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,9 +27,11 @@ import java.util.concurrent.CompletableFuture;
 public class TradeController {
 
     private final TradeService tradeService;
+    private final TradeServiceReactive tradeServiceReactive;
 
-    public TradeController(TradeService tradeService) {
+    public TradeController(TradeService tradeService, TradeServiceReactive tradeServiceReactive) {
         this.tradeService = tradeService;
+        this.tradeServiceReactive = tradeServiceReactive;
     }
 
     @PostMapping("/enrich")
@@ -45,9 +49,13 @@ public class TradeController {
         File outputFile = File.createTempFile("enriched_trades", ".csv");
 
         TradeParser parser = TradeParserFactory.getTradeParser(format);
-        CompletableFuture<File> futureFile = tradeService.enrichTradeAndGenerateCsvAsync(inputFile, outputFile, parser);
 
-        return futureFile.thenApply(resultFile ->{
+//        CompletableFuture<File> futureFile = tradeService.enrichTradeAndGenerateCsvAsync(inputFile, outputFile, parser);
+
+        Mono<File> resultMono = tradeServiceReactive.enrichTradeAndGenerateCsvReactive(inputFile, outputFile, parser);
+
+//        return futureFile.thenApply(resultFile ->{
+        return resultMono.toFuture().thenApply(resultFile -> {
             try {
                 InputStreamResource resource = new InputStreamResource(new FileInputStream(resultFile));
                 return ResponseEntity.ok()

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gmail.deniska1406sme.test_task.Model.Trade;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,6 +52,34 @@ public class JsonTradeParser implements TradeParser {
         } else {
             logger.error("Expected JSON array of trades");
             return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public Flux<Trade> parseTradesFlux(InputStream inputStream) throws IOException {
+        JsonNode root = mapper.readTree(inputStream);
+        if (root.isArray()) {
+            return Flux.fromIterable(() -> root.elements())
+                    .filter(tradeNode -> {
+                        String date = tradeNode.get("date").asText().trim();
+                        try {
+                            LocalDate.parse(date, formatter);
+                            return true;
+                        }catch (DateTimeParseException e) {
+                            logger.error("Invalid date format: {}", date);
+                            return false;
+                        }
+                    })
+                    .map(tradeNode -> {
+                        String date = tradeNode.get("date").asText().trim();
+                        String productId = tradeNode.get("productId").asText().trim();
+                        String currency = tradeNode.get("currency").asText().trim();
+                        Double price = tradeNode.get("price").asDouble();
+                        return new Trade(date, productId, currency, price);
+                    });
+        }else {
+            logger.error("Expected JSON array of trades");
+            return Flux.empty();
         }
     }
 }
