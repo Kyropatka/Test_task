@@ -50,12 +50,12 @@ public class TradeController {
 
         TradeParser parser = TradeParserFactory.getTradeParser(format);
 
-//        CompletableFuture<File> futureFile = tradeService.enrichTradeAndGenerateCsvAsync(inputFile, outputFile, parser);
+        CompletableFuture<File> futureFile = tradeService.enrichTradeAndGenerateCsvAsync(inputFile, outputFile, parser);
 
-        Mono<File> resultMono = tradeServiceReactive.enrichTradeAndGenerateCsvReactive(inputFile, outputFile, parser);
+//        Mono<File> resultMono = tradeServiceReactive.enrichTradeAndGenerateCsvReactive(inputFile, outputFile, parser);
 
-//        return futureFile.thenApply(resultFile ->{
-        return resultMono.toFuture().thenApply(resultFile -> {
+        return futureFile.thenApply(resultFile ->{
+//                return resultMono.toFuture().thenApply(resultFile -> {
             try {
                 InputStreamResource resource = new InputStreamResource(new FileInputStream(resultFile));
                 return ResponseEntity.ok()

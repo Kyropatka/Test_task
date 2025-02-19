@@ -57,7 +57,8 @@ public class ProductServiceReactive {
                         })
                 )
                 .sequential()
-                .then();
+                .then()
+                .doOnTerminate(() -> logger.info("Saved product names into Redis. Number of product names: {}", productNames.size()));
     }
 
     public Mono<Void> loadAndSaveProductReactive(File file) {
