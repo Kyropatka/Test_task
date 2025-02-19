@@ -73,4 +73,13 @@ Endpoint response for test_trade.xml
 
 ![image](https://github.com/user-attachments/assets/9e3b44bc-855c-400d-8071-4bd0bf5cbced)
 
+Response time and result of Stream API + Async to the middleSizeTrade file. (test 1 - 38.42s, test 2 - 38.06s, test 3 - 38.69s)
+
+![image](https://github.com/user-attachments/assets/6a390d40-54be-43f8-9997-bc6e2bbece28)
+
+Response time and result of Reactor's Flux to the middleSizeTrade file. (test 1 - 1m 20.78s, test 2 - 1m 29.28s, test 3 - 1m 28.86s)
+
+![image](https://github.com/user-attachments/assets/067a329b-9a2f-4a88-8ea5-7ef57f9a7e52)
+
+
 
