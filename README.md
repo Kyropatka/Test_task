@@ -44,6 +44,7 @@ I completed all 4 tasks using those libraries and APIs that are more familiar to
 9. Example using curl:
    
      - curl -X POST -F "file=@/path/to/your/tradeFile.csv" http://localhost:8080/api/v1/enrich --output enriched_trades.csv
+     - curl -X POST "http://localhost:8080/api/v1/enrich" -F "file=@C:/Users/smede/Desktop/Тестовое задание/middleSizeTrade.csv"
   
 10. If I had more time, I would try to understand reactive programming and Reactor’s Flux. And I would try to implement reactive data processing.
 
